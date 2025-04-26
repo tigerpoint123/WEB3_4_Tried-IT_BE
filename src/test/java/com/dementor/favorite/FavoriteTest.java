@@ -1,6 +1,7 @@
 package com.dementor.favorite;
 
 import com.dementor.config.TestSecurityConfig;
+import com.dementor.domain.favorite.entity.Favorite;
 import com.dementor.domain.favorite.repository.FavoriteRepository;
 import com.dementor.domain.job.entity.Job;
 import com.dementor.domain.job.repository.JobRepository;
@@ -13,11 +14,10 @@ import com.dementor.domain.mentor.repository.MentorRepository;
 import com.dementor.domain.mentoringclass.entity.MentoringClass;
 import com.dementor.domain.mentoringclass.repository.MentoringClassRepository;
 import com.dementor.global.security.CustomUserDetails;
+import com.dementor.global.security.WebConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,10 +37,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, WebConfig.class})
 @Transactional
 public class FavoriteTest {
-    private static final Logger log = LoggerFactory.getLogger(FavoriteTest.class);
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -126,6 +126,7 @@ public class FavoriteTest {
         //given
         Long memberId = mentee.getId();
         Long classId = mentoringClass.getId();
+
         //when & then
         mockMvc.perform(post("/api/favorite/{classId}", classId))
                 .andExpect(status().isOk())
@@ -135,5 +136,28 @@ public class FavoriteTest {
                 .andExpect(jsonPath("$.data.favoriteId").exists())
                 .andExpect(jsonPath("$.data.mentoringClassId").value(classId))
                 .andExpect(jsonPath("$.data.memberId").value(memberId));
+    }
+
+    @Test
+    @DisplayName("회원의 즐겨찾기 삭제")
+    void deleteFavorite() throws Exception {
+        //given
+        Long memberId = mentee.getId();
+        Long classId = mentoringClass.getId();
+        
+        Favorite favorite = favoriteRepository.save(
+                Favorite.builder()
+                        .mentoringClassId(classId)
+                        .memberId(memberId)
+                        .build()
+        );
+        
+        //when & then
+        mockMvc.perform(delete("/api/favorite/{favoriteId}", favorite.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.message").value("즐겨찾기 삭제 성공"));
+        
     }
 }
