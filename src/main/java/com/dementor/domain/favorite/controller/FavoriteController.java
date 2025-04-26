@@ -48,9 +48,13 @@ public class FavoriteController {
     @DeleteMapping("/{favoriteId}")
     @Operation(summary = "즐겨찾기 삭제", description = "회원이 특정 멘토링 수업을 즐겨찾기 삭제합니다.")
     public ResponseEntity<ApiResponse<Void>> deleteFavorite(
-            @PathVariable Long favoriteId
+            @PathVariable Long favoriteId,
+            Authentication authentication
     ) {
+        CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
+        Long memberId = userDetails.getId();
 
+        favoriteService.deleteFavorite(favoriteId, memberId);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(

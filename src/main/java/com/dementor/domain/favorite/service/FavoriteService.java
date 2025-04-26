@@ -22,4 +22,8 @@ public class FavoriteService {
 
         return FavoriteAddResponse.of(favorite);
     }
+
+    public void deleteFavorite(Long favoriteId, Long memberId) {
+        favoriteRepository.deleteByIdAndMemberId(favoriteId, memberId);
+    }
 }
