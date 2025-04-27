@@ -46,7 +46,11 @@ Service : https://www.dementor.site
 - mysql-team03
 - redis-server
 - rabbitMQ ( == web3_4_tried-it_begit)
+- angry_bartik
+- web3_4_tried-it_begit (rabbitMQ, prometheus, grafana)
 
+### 2-1. K6 도커 명령어 (powershell)
+> docker run --rm -v "/c/workplace/WEB3_4_Tried-IT_BE.git:/scripts" grafana/k6 run --out experimental-prometheus-rw=http://host.docker.internal:9090/api/v1/write /scripts/script.js
 <br>
 
 ## 4. 역할 분담

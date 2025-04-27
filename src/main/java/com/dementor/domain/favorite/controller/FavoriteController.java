@@ -6,7 +6,8 @@ import com.dementor.domain.favorite.service.FavoriteService;
 import com.dementor.global.ApiResponse;
 import com.dementor.global.custom.CurrentUser;
 import com.dementor.global.pagination.PaginationUtil;
-import io.swagger.v3.oas.annotations.Operation;
+import com.dementor.global.swaggerDocs.FavoriteSwagger;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,12 +20,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/favorite")
 @RequiredArgsConstructor
-public class FavoriteController {
+// TODO : 즐겨찾기 캐싱 전략 ( k6 + Grafana + Prometheus )
+public class FavoriteController implements FavoriteSwagger {
 
     private final FavoriteService favoriteService;
 
     @PostMapping("/{classId}")
-    @Operation(summary = "즐겨찾기 등록", description = "회원이 특정 멘토링 수업을 즐겨찾기 추가합니다.")
     public ResponseEntity<ApiResponse<FavoriteAddResponse>> addFavorite(
             @PathVariable Long classId,
             @CurrentUser Long memberId
@@ -43,7 +44,6 @@ public class FavoriteController {
     }
 
     @DeleteMapping("/{favoriteId}")
-    @Operation(summary = "즐겨찾기 삭제", description = "회원이 특정 멘토링 수업을 즐겨찾기 삭제합니다.")
     public ResponseEntity<ApiResponse<Void>> deleteFavorite(
             @PathVariable Long favoriteId,
             @CurrentUser Long memberId
@@ -61,11 +61,12 @@ public class FavoriteController {
     }
 
     @GetMapping("/{memberId}")
-    @Operation(summary = "회원의 즐겨찾기 목록 조회", description = "회원이 등록한 즐겨찾기 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<Page<FavoriteFindResponse>>> getFavoriteList(
         @PathVariable Long memberId,
-        @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+        @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+        HttpServletRequest request
     ) {
+        System.out.println("Authorization 헤더: " + request.getHeader("Authorization"));
         Pageable domainPageable = PaginationUtil.getFavoritePageable(pageable);
 
         Page<FavoriteFindResponse> response = favoriteService.findAllFavorite(memberId, domainPageable);

@@ -17,3 +17,32 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
     command: >
       sh -c "echo 'loopback_users = none' >> /etc/rabbitmq/rabbitmq.conf && rabbitmq-plugins enable rabbitmq_management && rabbitmq-plugins enable rabbitmq_stomp && rabbitmq-plugins enable rabbitmq_mqtt && rabbitmq-server"
+      
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-storage:
