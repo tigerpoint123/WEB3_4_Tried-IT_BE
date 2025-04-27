@@ -5,6 +5,7 @@ import com.dementor.domain.favorite.dto.response.FavoriteFindResponse;
 import com.dementor.domain.favorite.service.FavoriteService;
 import com.dementor.global.ApiResponse;
 import com.dementor.global.custom.CurrentUser;
+import com.dementor.global.pagination.PaginationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -65,6 +66,9 @@ public class FavoriteController {
         @PathVariable Long memberId,
         @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
+        Pageable domainPageable = PaginationUtil.getFavoritePageable(pageable);
+
+        Page<FavoriteFindResponse> response = favoriteService.findAllFavorite(memberId, domainPageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -72,7 +76,8 @@ public class FavoriteController {
                         ApiResponse.of(
                                 true,
                                 HttpStatus.OK,
-                                "favorited"
+                                "favorited",
+                                response
                         )
                 );
     }

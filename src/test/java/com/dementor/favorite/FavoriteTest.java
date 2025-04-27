@@ -29,8 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -159,5 +158,38 @@ public class FavoriteTest {
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.message").value("즐겨찾기 삭제 성공"));
         
+    }
+
+    @Test
+    @DisplayName("회원의 즐겨찾기 목록 조회")
+    void findAllFavorites() throws Exception {
+        //given
+        Long memberId = mentee.getId();
+        Long classId = mentoringClass.getId();
+
+        Favorite favorite = favoriteRepository.save(
+                Favorite.builder()
+                        .mentoringClassId(classId)
+                        .memberId(memberId)
+                        .build()
+        );
+
+        //when & then
+        mockMvc.perform(get("/api/favorite/{memberId}", memberId)
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "id,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.message").value("favorited"))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].id").value(favorite.getId()))
+                .andExpect(jsonPath("$.data.content[0].mentoringClassId").value(classId))
+                .andExpect(jsonPath("$.data.content[0].memberId").value(memberId))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.size").value(10))
+                .andExpect(jsonPath("$.data.number").value(0));
     }
 }
