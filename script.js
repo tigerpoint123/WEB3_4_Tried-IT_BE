@@ -1,5 +1,11 @@
 import http from 'k6/http';
 import { check } from 'k6';
+import { Counter } from 'k6/metrics';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
+
+// Prometheus 메트릭 정의
+const loginCounter = new Counter('login_total');
+const apiCallCounter = new Counter('api_call_total');
 
 export default function () {
     const BASE_URL = 'http://host.docker.internal:8080';
@@ -15,6 +21,7 @@ export default function () {
     check(loginRes, {
         '로그인 성공': (r) => r.status === 200,
     });
+    loginCounter.add(1);
 
     // 3. 응답 헤더에서 토큰 추출
     const cookies = loginRes.headers['Set-Cookie'];
@@ -57,4 +64,12 @@ export default function () {
     check(res, {
         'API 호출 성공': (r) => r.status === 200,
     });
+    apiCallCounter.add(1);
+}
+
+export function handleSummary(data) {
+    return {
+        'stdout': textSummary(data, { indent: ' ', enableColors: true }),
+        'metrics.json': JSON.stringify(data),
+    };
 }
