@@ -37,6 +37,9 @@ public class MentoringClass extends BaseEntity {
 	@Getter
 	private Mentor mentor;
 
+	@Getter
+	private int favoriteCount;
+
 	public void updateTitle(String title) {
 		this.title = title;
 	}
@@ -55,6 +58,10 @@ public class MentoringClass extends BaseEntity {
 
 	public void updateStack(String[] stack) {
 		this.stack = String.join(",", stack);
+	}
+
+	public void updateFavoriteCount(int count) {
+		this.favoriteCount = count;
 	}
 
 	// 멘토의 memberId 얻기 (applyService. for 멘토링챗 타입의 chatroom생성 )
