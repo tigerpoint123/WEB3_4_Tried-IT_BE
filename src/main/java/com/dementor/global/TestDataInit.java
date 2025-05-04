@@ -3,6 +3,7 @@ package com.dementor.global;
 import com.dementor.domain.admin.entity.Admin;
 import com.dementor.domain.admin.repository.AdminRepository;
 import com.dementor.domain.apply.repository.ApplyRepository;
+import com.dementor.domain.favorite.entity.Favorite;
 import com.dementor.domain.favorite.repository.FavoriteRepository;
 import com.dementor.domain.job.entity.Job;
 import com.dementor.domain.job.repository.JobRepository;
@@ -10,16 +11,16 @@ import com.dementor.domain.member.entity.Member;
 import com.dementor.domain.member.entity.UserRole;
 import com.dementor.domain.member.repository.MemberRepository;
 import com.dementor.domain.mentor.entity.Mentor;
-import com.dementor.domain.mentor.repository.MentorRepository;
 import com.dementor.domain.mentor.repository.MentorApplyProposalRepository;
 import com.dementor.domain.mentor.repository.MentorEditProposalRepository;
-import com.dementor.domain.notification.repository.NotificationRepository;
-import com.dementor.domain.postattachment.repository.PostAttachmentRepository;
+import com.dementor.domain.mentor.repository.MentorRepository;
 import com.dementor.domain.mentoringclass.dto.DayOfWeek;
 import com.dementor.domain.mentoringclass.entity.MentoringClass;
 import com.dementor.domain.mentoringclass.entity.Schedule;
 import com.dementor.domain.mentoringclass.repository.MentoringClassRepository;
 import com.dementor.domain.mentoringclass.repository.ScheduleRepository;
+import com.dementor.domain.notification.repository.NotificationRepository;
+import com.dementor.domain.postattachment.repository.PostAttachmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
@@ -78,54 +79,85 @@ public class TestDataInit implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        log.info("기존 데이터 삭제 시작");
-        
-        // 외래 키 제약 조건을 고려한 삭제 순서
-        mentorApplyProposalRepository.deleteAll();
-        scheduleRepository.deleteAll();
-        mentoringClassRepository.deleteAll();
-        favoriteRepository.deleteAll();
-        applyRepository.deleteAll();
-        postAttachmentRepository.deleteAll();
-        notificationRepository.deleteAll();
-        mentorEditProposalRepository.deleteAll();
-        mentorRepository.deleteAll();
-        memberRepository.deleteAll();
-        jobRepository.deleteAll();
-        adminRepository.deleteAll();
-
-        log.info("기존 데이터 삭제 완료");
-        log.info("더미 데이터 생성 시작");
+        // 각 테이블의 데이터 존재 여부 확인
+        boolean hasJobs = jobRepository.count() > 0;
+        boolean hasAdmin = adminRepository.count() > 0;
+        boolean hasMembers = memberRepository.count() > 0;
+        boolean hasMentors = mentorRepository.count() > 0;
+        boolean hasMentoringClasses = mentoringClassRepository.count() > 0;
+        boolean hasSchedules = scheduleRepository.count() > 0;
+        boolean hasFavorites = favoriteRepository.count() > 0;
 
         // 1. 직무 데이터 생성
-        List<Job> jobs = createJobs();
-        jobRepository.saveAll(jobs);
-        log.info("직무 데이터 생성 완료: {}개", jobs.size());
+        List<Job> jobs = new ArrayList<>();
+        if (!hasJobs) {
+            jobs = createJobs();
+            jobRepository.saveAll(jobs);
+            log.info("직무 데이터 생성 완료: {}개", jobs.size());
+        } else {
+            log.info("직무 데이터가 이미 존재합니다.");
+            jobs = jobRepository.findAll();
+        }
 
         // 2. 관리자 데이터 생성
-        Admin admin = createAdmin();
-        adminRepository.save(admin);
-        log.info("관리자 데이터 생성 완료");
+        if (!hasAdmin) {
+            Admin admin = createAdmin();
+            adminRepository.save(admin);
+            log.info("관리자 데이터 생성 완료");
+        } else {
+            log.info("관리자 데이터가 이미 존재합니다.");
+        }
 
         // 3. 멤버 데이터 생성
-        List<Member> members = createMembers();
-        memberRepository.saveAll(members);
-        log.info("멤버 데이터 생성 완료: {}개", members.size());
+        List<Member> members = new ArrayList<>();
+        if (!hasMembers) {
+            members = createMembers();
+            memberRepository.saveAll(members);
+            log.info("멤버 데이터 생성 완료: {}개", members.size());
+        } else {
+            log.info("멤버 데이터가 이미 존재합니다.");
+            members = memberRepository.findAll();
+        }
 
         // 4. 멘토 데이터 생성
-        List<Mentor> mentors = createMentors(members, jobs);
-        mentorRepository.saveAll(mentors);
-        log.info("멘토 데이터 생성 완료: {}개", mentors.size());
+        List<Mentor> mentors = new ArrayList<>();
+        if (!hasMentors) {
+            mentors = createMentors(members, jobs);
+            mentorRepository.saveAll(mentors);
+            log.info("멘토 데이터 생성 완료: {}개", mentors.size());
+        } else {
+            log.info("멘토 데이터가 이미 존재합니다.");
+            mentors = mentorRepository.findAll();
+        }
 
         // 5. 멘토링 클래스 데이터 생성
-        List<MentoringClass> mentoringClasses = createMentoringClasses(mentors);
-        mentoringClassRepository.saveAll(mentoringClasses);
-        log.info("멘토링 클래스 데이터 생성 완료: {}개", mentoringClasses.size());
+        List<MentoringClass> mentoringClasses = new ArrayList<>();
+        if (!hasMentoringClasses) {
+            mentoringClasses = createMentoringClasses(mentors);
+            mentoringClassRepository.saveAll(mentoringClasses);
+            log.info("멘토링 클래스 데이터 생성 완료: {}개", mentoringClasses.size());
+        } else {
+            log.info("멘토링 클래스 데이터가 이미 존재합니다.");
+            mentoringClasses = mentoringClassRepository.findAll();
+        }
 
         // 6. 스케줄 데이터 생성
-        List<Schedule> schedules = createSchedules(mentoringClasses);
-        scheduleRepository.saveAll(schedules);
-        log.info("스케줄 데이터 생성 완료: {}개", schedules.size());
+        if (!hasSchedules) {
+            List<Schedule> schedules = createSchedules(mentoringClasses);
+            scheduleRepository.saveAll(schedules);
+            log.info("스케줄 데이터 생성 완료: {}개", schedules.size());
+        } else {
+            log.info("스케줄 데이터가 이미 존재합니다.");
+        }
+
+        // 7. 즐겨찾기 데이터 생성
+        if (!hasFavorites) {
+            List<Favorite> favorites = createFavorites(members, mentoringClasses);
+            favoriteRepository.saveAll(favorites);
+            log.info("즐겨찾기 데이터 생성 완료: {}개", favorites.size());
+        } else {
+            log.info("즐겨찾기 데이터가 이미 존재합니다.");
+        }
 
         log.info("더미 데이터 생성 완료");
     }
@@ -143,6 +175,11 @@ public class TestDataInit implements CommandLineRunner {
     }
 
     private Admin createAdmin() {
+        if (adminRepository.count() > 0) {
+            log.info("관리자 데이터가 이미 존재합니다.");
+            return null;
+        }
+
         return Admin.builder()
                 .username("admin")
                 .password(passwordEncoder.encode("1234"))
@@ -279,5 +316,27 @@ public class TestDataInit implements CommandLineRunner {
             }
         }
         return schedules;
+    }
+
+    private List<Favorite> createFavorites(List<Member> members, List<MentoringClass> mentoringClasses) {
+        List<Favorite> favorites = new ArrayList<>();
+        Random random = new Random();
+
+        // 각 멘토링 클래스마다 즐겨찾기 생성
+        for (MentoringClass mentoringClass : mentoringClasses) {
+            int favoriteCount = mentoringClass.getFavoriteCount(); // 멘토링 클래스의 즐겨찾기 개수만큼 생성
+            Set<Long> selectedMemberIds = new HashSet<>();
+
+            while (selectedMemberIds.size() < favoriteCount) {
+                Member member = members.get(random.nextInt(members.size()));
+                if (selectedMemberIds.add(member.getId())) {
+                    favorites.add(Favorite.builder()
+                            .memberId(member.getId())
+                            .mentoringClassId(mentoringClass.getId())
+                            .build());
+                }
+            }
+        }
+        return favorites;
     }
 }
